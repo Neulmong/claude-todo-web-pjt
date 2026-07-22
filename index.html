@@ -7,6 +7,45 @@
 <style>
   :root {
     color-scheme: light dark;
+
+    --bg: #F3F4F6;
+    --text: #111827;
+    --text-secondary: #6B7280;
+    --text-muted: #9CA3AF;
+    --surface: #FFFFFF;
+    --surface-alt: #F9FAFB;
+    --border: #E5E7EB;
+    --border-strong: #D1D5DB;
+    --shadow: rgba(0, 0, 0, 0.06);
+
+    --accent: #6366F1;
+    --accent-hover: #4F46E5;
+    --personal: #3B82F6;
+    --study: #8B5CF6;
+    --hobby: #10B981;
+    --danger: #EF4444;
+
+    --chip-all-bg: #EEF2FF;
+    --chip-personal-bg: #EFF6FF;
+    --chip-study-bg: #F5F3FF;
+    --chip-hobby-bg: #ECFDF5;
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0F172A;
+    --text: #E5E7EB;
+    --text-secondary: #9CA3AF;
+    --text-muted: #6B7280;
+    --surface: #1E293B;
+    --surface-alt: #172033;
+    --border: #334155;
+    --border-strong: #475569;
+    --shadow: rgba(0, 0, 0, 0.4);
+
+    --chip-all-bg: rgba(99, 102, 241, 0.18);
+    --chip-personal-bg: rgba(59, 130, 246, 0.18);
+    --chip-study-bg: rgba(139, 92, 246, 0.18);
+    --chip-hobby-bg: rgba(16, 185, 129, 0.18);
   }
 
   * {
@@ -16,10 +55,11 @@
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #F3F4F6;
-    color: #111827;
+    background: var(--bg);
+    color: var(--text);
     display: flex;
     justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
   /* .container 역할 (실제 DOM 클래스명은 .app) */
@@ -32,14 +72,40 @@
 
   header {
     padding: 0 0 20px;
-    text-align: center;
+  }
+
+  .header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   header h1 {
     margin: 0;
     font-size: 22px;
     font-weight: 700;
-    color: #111827;
+    color: var(--text);
+  }
+
+  #theme-toggle {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  #theme-toggle:hover {
+    border-color: var(--accent);
   }
 
   #progress-section {
@@ -51,14 +117,14 @@
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    color: #6B7280;
+    color: var(--text-secondary);
     margin-bottom: 6px;
   }
 
   .progress-bar {
     width: 100%;
     height: 10px;
-    background: #E5E7EB;
+    background: var(--border);
     border-radius: 9999px;
     overflow: hidden;
     margin-bottom: 14px;
@@ -67,24 +133,24 @@
   .progress-bar-fill {
     height: 100%;
     border-radius: 9999px;
-    background: #6366F1;
+    background: var(--accent);
     transition: width 0.3s ease;
   }
 
   .progress-bar-fill[data-category="전체"] {
-    background: #6366F1;
+    background: var(--accent);
   }
 
   .progress-bar-fill[data-category="개인"] {
-    background: #3B82F6;
+    background: var(--personal);
   }
 
   .progress-bar-fill[data-category="공부"] {
-    background: #8B5CF6;
+    background: var(--study);
   }
 
   .progress-bar-fill[data-category="취미"] {
-    background: #10B981;
+    background: var(--hobby);
   }
 
   #category-tabs {
@@ -96,38 +162,38 @@
   }
 
   .tab-btn {
-    background: #F9FAFB;
-    border: 1px solid #E5E7EB;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 8px 16px;
     font-size: 14px;
-    color: #374151;
+    color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
 
   .tab-btn.active[data-category="전체"] {
-    background: #6366F1;
-    border-color: #6366F1;
+    background: var(--accent);
+    border-color: var(--accent);
     color: #fff;
   }
 
   .tab-btn.active[data-category="개인"] {
-    background: #3B82F6;
-    border-color: #3B82F6;
+    background: var(--personal);
+    border-color: var(--personal);
     color: #fff;
   }
 
   .tab-btn.active[data-category="공부"] {
-    background: #8B5CF6;
-    border-color: #8B5CF6;
+    background: var(--study);
+    border-color: var(--study);
     color: #fff;
   }
 
   .tab-btn.active[data-category="취미"] {
-    background: #10B981;
-    border-color: #10B981;
+    background: var(--hobby);
+    border-color: var(--hobby);
     color: #fff;
   }
 
@@ -149,38 +215,38 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #fff;
+    background: var(--surface);
     border-radius: 12px;
     padding: 14px 16px;
-    border-left: 3px solid #6366F1;
+    border-left: 3px solid var(--accent);
     transition: box-shadow 0.15s ease, background 0.15s ease;
   }
 
   .todo-item[data-category="개인"] {
-    border-left-color: #3B82F6;
+    border-left-color: var(--personal);
   }
 
   .todo-item[data-category="공부"] {
-    border-left-color: #8B5CF6;
+    border-left-color: var(--study);
   }
 
   .todo-item[data-category="취미"] {
-    border-left-color: #10B981;
+    border-left-color: var(--hobby);
   }
 
   .todo-item:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px var(--shadow);
   }
 
   .todo-item.completed {
-    background: #F9FAFB;
+    background: var(--surface-alt);
     border-left-color: transparent;
   }
 
   .todo-item input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: #6366F1;
+    accent-color: var(--accent);
     cursor: pointer;
     flex-shrink: 0;
   }
@@ -189,12 +255,12 @@
     flex: 1;
     word-break: break-all;
     font-size: 14px;
-    color: #111827;
+    color: var(--text);
   }
 
   .todo-item.completed .todo-text {
     text-decoration: line-through;
-    color: #9CA3AF;
+    color: var(--text-muted);
   }
 
   /* 인라인 수정용 입력창 (수정 모드 진입 시) */
@@ -203,38 +269,38 @@
     border: none;
     background: transparent;
     font-size: 14px;
-    color: #111827;
+    color: var(--text);
     padding: 0 0 2px;
     outline: none;
     border-bottom: 1px solid transparent;
   }
 
   .todo-item input[type="text"]:focus {
-    border-bottom-color: #6366F1;
+    border-bottom-color: var(--accent);
   }
 
   .todo-item .todo-category {
     font-size: 11px;
-    color: #6366F1;
-    background: #eef2ff;
+    color: var(--accent);
+    background: var(--chip-all-bg);
     padding: 2px 8px;
     border-radius: 999px;
     white-space: nowrap;
   }
 
   .todo-item[data-category="개인"] .todo-category {
-    color: #3B82F6;
-    background: #EFF6FF;
+    color: var(--personal);
+    background: var(--chip-personal-bg);
   }
 
   .todo-item[data-category="공부"] .todo-category {
-    color: #8B5CF6;
-    background: #F5F3FF;
+    color: var(--study);
+    background: var(--chip-study-bg);
   }
 
   .todo-item[data-category="취미"] .todo-category {
-    color: #10B981;
-    background: #ECFDF5;
+    color: var(--hobby);
+    background: var(--chip-hobby-bg);
   }
 
   .todo-item button {
@@ -242,17 +308,17 @@
     background: none;
     cursor: pointer;
     font-size: 15px;
-    color: #9CA3AF;
+    color: var(--text-muted);
     line-height: 1;
   }
 
   .todo-item button:hover {
-    color: #EF4444;
+    color: var(--danger);
   }
 
   .empty-message {
     text-align: center;
-    color: #9CA3AF;
+    color: var(--text-muted);
     font-size: 14px;
     padding: 32px 0;
   }
@@ -263,39 +329,40 @@
     gap: 8px;
     padding: 20px 0 0;
     margin-top: 8px;
-    border-top: 1px solid #E5E7EB;
+    border-top: 1px solid var(--border);
   }
 
   #todo-input {
     flex: 1 1 160px;
     min-width: 0;
     padding: 12px;
-    border: 1px solid #D1D5DB;
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     font-size: 14px;
-    color: #111827;
+    color: var(--text);
+    background: var(--surface);
     outline: none;
     transition: border-color 0.15s ease;
   }
 
   #todo-input:focus {
-    border-color: #6366F1;
+    border-color: var(--accent);
   }
 
   #category-select {
     padding: 12px;
-    border: 1px solid #D1D5DB;
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     font-size: 14px;
-    color: #111827;
-    background: #fff;
+    color: var(--text);
+    background: var(--surface);
   }
 
   #add-btn {
     padding: 12px 20px;
     border: none;
     border-radius: 10px;
-    background: #6366F1;
+    background: var(--accent);
     color: #fff;
     font-size: 14px;
     font-weight: 600;
@@ -304,7 +371,7 @@
   }
 
   #add-btn:hover {
-    background: #4F46E5;
+    background: var(--accent-hover);
   }
 
   @media (max-width: 360px) {
@@ -328,7 +395,10 @@
 <body>
   <div class="app">
     <header>
-      <h1>📋 오늘의 할 일</h1>
+      <div class="header-bar">
+        <h1>📋 오늘의 할 일</h1>
+        <button id="theme-toggle" type="button" aria-label="다크모드 전환">🌙</button>
+      </div>
     </header>
 
     <section id="progress-section"></section>
@@ -362,6 +432,30 @@
 
   const { createClient } = window.supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // 다크모드 선택값 저장 키 (할 일 데이터가 아닌 화면 설정이므로 localStorage에 보관)
+  const THEME_KEY = "theme";
+
+  // 저장된 테마 선택값이 있으면 그것을, 없으면 시스템(OS) 다크모드 설정을 따른다.
+  function getPreferredTheme() {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  // 문서에 테마를 적용하고 토글 버튼 아이콘을 갱신한다.
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    const toggleBtn = document.getElementById("theme-toggle");
+    if (toggleBtn) toggleBtn.textContent = theme === "dark" ? "☀️" : "🌙";
+  }
+
+  // 현재 테마를 반전시키고 선택값을 저장한다.
+  function toggleTheme() {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  }
 
   // 전역 상태 (최소화하여 상단에 모아서 선언)
   let todos = [];              // 전체 할 일 목록
@@ -651,6 +745,9 @@
     const select = document.getElementById("category-select");
     const addBtn = document.getElementById("add-btn");
     const tabs = document.getElementById("category-tabs");
+    const themeToggle = document.getElementById("theme-toggle");
+
+    if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
 
     addBtn.addEventListener("click", () => {
       addTodo(input.value, select.value);
@@ -677,8 +774,9 @@
     });
   }
 
-  // 앱 초기화: 이벤트를 등록하고 Supabase에서 할 일을 불러와 첫 화면을 렌더링한다.
+  // 앱 초기화: 테마를 적용하고 이벤트를 등록한 뒤 Supabase에서 할 일을 불러와 첫 화면을 렌더링한다.
   async function init() {
+    applyTheme(getPreferredTheme());
     bindEvents();
     todos = await loadTodos();
     renderTodos();
