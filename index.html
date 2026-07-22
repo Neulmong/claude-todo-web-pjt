@@ -353,9 +353,15 @@
     </section>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // localStorage 저장 키
-  const STORAGE_KEY = "todos";
+  // Supabase 프로젝트 연결 정보 (anon/publishable 키는 RLS 정책 하에 클라이언트에 노출되어도 안전하다)
+  const SUPABASE_URL = "https://hazhjfnyzzhblfqftshr.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_Hp6rIqCHLRX6L9vwsYpx7A_UFye3OiM";
+  const TABLE_NAME = "todo_tbl";
+
+  const { createClient } = window.supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // 전역 상태 (최소화하여 상단에 모아서 선언)
   let todos = [];              // 전체 할 일 목록
@@ -363,29 +369,23 @@
   let activeEditId = null;      // 인라인 편집 중인 항목의 id (없으면 null)
   let activeCommitFn = null;    // 편집 중인 항목을 저장 처리하는 함수 (동시 편집 전환 시 호출)
 
-  // localStorage에서 할 일 목록을 불러온다. 값이 없거나 JSON 파싱에 실패하면 빈 배열을 반환한다.
-  function loadTodos() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
+  // Supabase의 todo_tbl에서 할 일 목록을 최신순으로 불러온다. 실패 시 빈 배열을 반환한다.
+  async function loadTodos() {
+    const { data, error } = await db
+      .from(TABLE_NAME)
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("불러오기 실패", error);
       return [];
     }
+
+    return data || [];
   }
 
-  // 현재 todos 배열을 localStorage에 JSON 문자열로 저장한다. 저장 실패 시 콘솔에 에러만 남기고 넘어간다.
-  function saveTodos() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-    } catch (e) {
-      console.error("저장 실패", e);
-    }
-  }
-
-  // 새 할 일을 목록 맨 앞에 추가한다. 공백만 입력된 경우 추가하지 않고 입력창 포커스만 되돌린다.
-  function addTodo(text, category) {
+  // 새 할 일을 Supabase에 저장하고 목록 맨 앞에 추가한다. 공백만 입력된 경우 추가하지 않고 입력창 포커스만 되돌린다.
+  async function addTodo(text, category) {
     const trimmed = (text || "").trim();
     const input = document.getElementById("todo-input");
 
@@ -394,15 +394,18 @@
       return;
     }
 
-    todos.unshift({
-      id: Date.now().toString(),
-      text: trimmed,
-      category: category || "개인",
-      completed: false,
-      createdAt: new Date().toISOString()
-    });
+    const { data, error } = await db
+      .from(TABLE_NAME)
+      .insert({ text: trimmed, category: category || "개인", completed: false })
+      .select()
+      .single();
 
-    saveTodos();
+    if (error) {
+      console.error("추가 실패", error);
+      return;
+    }
+
+    todos.unshift(data);
 
     if (input) input.value = "";
 
@@ -410,34 +413,50 @@
     renderProgress();
   }
 
-  // 해당 id의 할 일 텍스트를 newText로 교체한다. 빈 문자열이면 기존 텍스트를 그대로 유지한다.
-  function editTodo(id, newText) {
+  // 해당 id의 할 일 텍스트를 Supabase와 로컬 상태에서 newText로 교체한다. 빈 문자열이면 기존 텍스트를 그대로 유지한다.
+  async function editTodo(id, newText) {
     const trimmed = (newText || "").trim();
     if (!trimmed) return;
 
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
 
+    const { error } = await db.from(TABLE_NAME).update({ text: trimmed }).eq("id", id);
+    if (error) {
+      console.error("수정 실패", error);
+      return;
+    }
+
     todo.text = trimmed;
-    saveTodos();
     renderTodos();
   }
 
-  // 해당 id의 할 일을 목록과 저장소에서 삭제한다.
-  function deleteTodo(id) {
+  // 해당 id의 할 일을 Supabase와 로컬 목록에서 삭제한다.
+  async function deleteTodo(id) {
+    const { error } = await db.from(TABLE_NAME).delete().eq("id", id);
+    if (error) {
+      console.error("삭제 실패", error);
+      return;
+    }
+
     todos = todos.filter((t) => t.id !== id);
-    saveTodos();
     renderTodos();
     renderProgress();
   }
 
-  // 해당 id의 완료 상태를 반전(true ↔ false)시킨다.
-  function toggleTodo(id) {
+  // 해당 id의 완료 상태를 Supabase와 로컬 상태에서 반전(true ↔ false)시킨다.
+  async function toggleTodo(id) {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
 
-    todo.completed = !todo.completed;
-    saveTodos();
+    const nextCompleted = !todo.completed;
+    const { error } = await db.from(TABLE_NAME).update({ completed: nextCompleted }).eq("id", id);
+    if (error) {
+      console.error("상태 변경 실패", error);
+      return;
+    }
+
+    todo.completed = nextCompleted;
     renderTodos();
     renderProgress();
   }
@@ -658,10 +677,10 @@
     });
   }
 
-  // 앱 초기화: 저장된 할 일을 불러오고 이벤트를 등록한 뒤 첫 화면을 렌더링한다.
-  function init() {
-    todos = loadTodos();
+  // 앱 초기화: 이벤트를 등록하고 Supabase에서 할 일을 불러와 첫 화면을 렌더링한다.
+  async function init() {
     bindEvents();
+    todos = await loadTodos();
     renderTodos();
     renderProgress();
   }
