@@ -88,7 +88,13 @@
     color: var(--text);
   }
 
-  #theme-toggle {
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  #theme-toggle,
+  #logout-btn {
     flex-shrink: 0;
     width: 36px;
     height: 36px;
@@ -106,6 +112,82 @@
 
   #theme-toggle:hover {
     border-color: var(--accent);
+  }
+
+  #logout-btn:hover {
+    border-color: var(--danger);
+  }
+
+  #auth-section {
+    padding: 4px 0 8px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .auth-tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .auth-tab-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .auth-form input {
+    padding: 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .auth-form input:focus {
+    border-color: var(--accent);
+  }
+
+  .auth-submit-btn {
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .auth-submit-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  .auth-message {
+    min-height: 16px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--danger);
   }
 
   #progress-section {
@@ -397,30 +479,57 @@
     <header>
       <div class="header-bar">
         <h1>📋 오늘의 할 일</h1>
-        <button id="theme-toggle" type="button" aria-label="다크모드 전환">🌙</button>
+        <div class="header-actions">
+          <button id="logout-btn" type="button" aria-label="로그아웃" style="display: none;">🚪</button>
+          <button id="theme-toggle" type="button" aria-label="다크모드 전환">🌙</button>
+        </div>
       </div>
     </header>
 
-    <section id="progress-section"></section>
+    <section id="auth-section">
+      <nav class="auth-tabs">
+        <button class="auth-tab-btn active" type="button" data-mode="login">로그인</button>
+        <button class="auth-tab-btn" type="button" data-mode="signup">회원가입</button>
+      </nav>
 
-    <nav id="category-tabs">
-      <button class="tab-btn active" data-category="전체">전체</button>
-      <button class="tab-btn" data-category="개인">개인</button>
-      <button class="tab-btn" data-category="공부">공부</button>
-      <button class="tab-btn" data-category="취미">취미</button>
-    </nav>
+      <form id="login-form" class="auth-form">
+        <input type="text" id="login-username" placeholder="아이디" autocomplete="username" required />
+        <input type="password" id="login-password" placeholder="비밀번호" autocomplete="current-password" required />
+        <button type="submit" class="auth-submit-btn">로그인</button>
+        <p class="auth-message" id="login-message"></p>
+      </form>
 
-    <section id="todo-list"></section>
-
-    <section id="input-area">
-      <input type="text" id="todo-input" placeholder="할 일을 입력하세요" />
-      <select id="category-select">
-        <option value="개인">개인</option>
-        <option value="공부">공부</option>
-        <option value="취미">취미</option>
-      </select>
-      <button id="add-btn">추가</button>
+      <form id="signup-form" class="auth-form" hidden>
+        <input type="text" id="signup-username" placeholder="아이디" autocomplete="username" required />
+        <input type="password" id="signup-password" placeholder="비밀번호" autocomplete="new-password" required />
+        <input type="password" id="signup-password-confirm" placeholder="비밀번호 확인" autocomplete="new-password" required />
+        <button type="submit" class="auth-submit-btn">회원가입</button>
+        <p class="auth-message" id="signup-message"></p>
+      </form>
     </section>
+
+    <div id="todo-view" hidden>
+      <section id="progress-section"></section>
+
+      <nav id="category-tabs">
+        <button class="tab-btn active" data-category="전체">전체</button>
+        <button class="tab-btn" data-category="개인">개인</button>
+        <button class="tab-btn" data-category="공부">공부</button>
+        <button class="tab-btn" data-category="취미">취미</button>
+      </nav>
+
+      <section id="todo-list"></section>
+
+      <section id="input-area">
+        <input type="text" id="todo-input" placeholder="할 일을 입력하세요" />
+        <select id="category-select">
+          <option value="개인">개인</option>
+          <option value="공부">공부</option>
+          <option value="취미">취미</option>
+        </select>
+        <button id="add-btn">추가</button>
+      </section>
+    </div>
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -455,6 +564,141 @@
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     localStorage.setItem(THEME_KEY, next);
     applyTheme(next);
+  }
+
+  // 회원 목록 및 로그인 세션 저장 키 (이 단계에서는 Supabase 대신 localStorage만 사용)
+  const USERS_KEY = "users";
+  const SESSION_KEY = "currentUser";
+
+  // localStorage에 저장된 회원 목록을 불러온다. 값이 없거나 파싱에 실패하면 빈 배열을 반환한다.
+  function getUsers() {
+    try {
+      const raw = localStorage.getItem(USERS_KEY);
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 회원 목록을 localStorage에 저장한다.
+  function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+
+  // 현재 로그인된 사용자의 아이디를 반환한다. 로그인 상태가 아니면 null.
+  function getCurrentUser() {
+    return localStorage.getItem(SESSION_KEY);
+  }
+
+  // 로그인 세션을 저장한다.
+  function setCurrentUser(username) {
+    localStorage.setItem(SESSION_KEY, username);
+  }
+
+  // 로그인 세션을 제거한다(로그아웃).
+  function clearCurrentUser() {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  // 로그인/회원가입 화면을 표시하고 Todo 화면을 숨긴다.
+  function showAuthView() {
+    document.getElementById("auth-section").hidden = false;
+    document.getElementById("todo-view").hidden = true;
+
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) logoutBtn.style.display = "none";
+  }
+
+  // Todo 화면을 표시하고 로그인/회원가입 화면을 숨긴 뒤 할 일 목록을 불러온다.
+  async function showTodoView() {
+    document.getElementById("auth-section").hidden = true;
+    document.getElementById("todo-view").hidden = false;
+
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) logoutBtn.style.display = "";
+
+    todos = await loadTodos();
+    renderTodos();
+    renderProgress();
+  }
+
+  // 로그인/회원가입 탭 전환: 선택된 폼만 보여주고 탭 버튼의 active 상태를 갱신한다.
+  function switchAuthMode(mode) {
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+    if (loginForm) loginForm.hidden = mode !== "login";
+    if (signupForm) signupForm.hidden = mode !== "signup";
+
+    document.querySelectorAll(".auth-tab-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.mode === mode);
+    });
+
+    const loginMessage = document.getElementById("login-message");
+    const signupMessage = document.getElementById("signup-message");
+    if (loginMessage) loginMessage.textContent = "";
+    if (signupMessage) signupMessage.textContent = "";
+  }
+
+  // 회원가입 처리: 아이디 중복과 비밀번호 확인을 검사한 뒤 회원을 등록하고 바로 로그인시킨다.
+  function handleSignup(e) {
+    e.preventDefault();
+
+    const username = document.getElementById("signup-username").value.trim();
+    const password = document.getElementById("signup-password").value;
+    const passwordConfirm = document.getElementById("signup-password-confirm").value;
+    const message = document.getElementById("signup-message");
+
+    if (!username || !password) {
+      message.textContent = "아이디와 비밀번호를 입력해주세요.";
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      message.textContent = "비밀번호가 일치하지 않습니다.";
+      return;
+    }
+
+    const users = getUsers();
+    if (users.some((u) => u.username === username)) {
+      message.textContent = "이미 존재하는 아이디입니다.";
+      return;
+    }
+
+    users.push({ username, password });
+    saveUsers(users);
+    setCurrentUser(username);
+    message.textContent = "";
+
+    showTodoView();
+  }
+
+  // 로그인 처리: 아이디/비밀번호가 일치하는 회원이 있으면 로그인시키고 Todo 화면으로 전환한다.
+  function handleLogin(e) {
+    e.preventDefault();
+
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
+    const message = document.getElementById("login-message");
+
+    const users = getUsers();
+    const matched = users.some((u) => u.username === username && u.password === password);
+
+    if (!matched) {
+      message.textContent = "아이디 또는 비밀번호가 올바르지 않습니다.";
+      return;
+    }
+
+    setCurrentUser(username);
+    message.textContent = "";
+
+    showTodoView();
+  }
+
+  // 로그아웃 처리: 세션을 지우고 로그인/회원가입 화면으로 되돌아간다.
+  function handleLogout() {
+    clearCurrentUser();
+    showAuthView();
   }
 
   // 전역 상태 (최소화하여 상단에 모아서 선언)
@@ -746,8 +990,24 @@
     const addBtn = document.getElementById("add-btn");
     const tabs = document.getElementById("category-tabs");
     const themeToggle = document.getElementById("theme-toggle");
+    const logoutBtn = document.getElementById("logout-btn");
+    const authTabs = document.querySelector(".auth-tabs");
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
 
     if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
+    if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+
+    if (authTabs) {
+      authTabs.addEventListener("click", (e) => {
+        const btn = e.target.closest(".auth-tab-btn");
+        if (!btn) return;
+        switchAuthMode(btn.dataset.mode);
+      });
+    }
+
+    if (loginForm) loginForm.addEventListener("submit", handleLogin);
+    if (signupForm) signupForm.addEventListener("submit", handleSignup);
 
     addBtn.addEventListener("click", () => {
       addTodo(input.value, select.value);
@@ -774,13 +1034,16 @@
     });
   }
 
-  // 앱 초기화: 테마를 적용하고 이벤트를 등록한 뒤 Supabase에서 할 일을 불러와 첫 화면을 렌더링한다.
+  // 앱 초기화: 테마를 적용하고 이벤트를 등록한 뒤, 로그인 상태에 따라 인증 화면 또는 Todo 화면을 보여준다.
   async function init() {
     applyTheme(getPreferredTheme());
     bindEvents();
-    todos = await loadTodos();
-    renderTodos();
-    renderProgress();
+
+    if (getCurrentUser()) {
+      await showTodoView();
+    } else {
+      showAuthView();
+    }
   }
 
   init();
