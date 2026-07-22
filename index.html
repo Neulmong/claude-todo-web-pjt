@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 할 일</title>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #F3F4F6;
+    color: #111827;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* .container 역할 (실제 DOM 클래스명은 .app) */
+  .app {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+
+  header {
+    padding: 0 0 20px;
+    text-align: center;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  #progress-section {
+    padding: 0 0 20px;
+  }
+
+  .progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #6B7280;
+    margin-bottom: 6px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #E5E7EB;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: #6366F1;
+    transition: width 0.3s ease;
+  }
+
+  .progress-bar-fill[data-category="전체"] {
+    background: #6366F1;
+  }
+
+  .progress-bar-fill[data-category="개인"] {
+    background: #3B82F6;
+  }
+
+  .progress-bar-fill[data-category="공부"] {
+    background: #8B5CF6;
+  }
+
+  .progress-bar-fill[data-category="취미"] {
+    background: #10B981;
+  }
+
+  #category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 0 20px;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .tab-btn.active[data-category="전체"] {
+    background: #6366F1;
+    border-color: #6366F1;
+    color: #fff;
+  }
+
+  .tab-btn.active[data-category="개인"] {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: #fff;
+  }
+
+  .tab-btn.active[data-category="공부"] {
+    background: #8B5CF6;
+    border-color: #8B5CF6;
+    color: #fff;
+  }
+
+  .tab-btn.active[data-category="취미"] {
+    background: #10B981;
+    border-color: #10B981;
+    color: #fff;
+  }
+
+  #todo-list {
+    padding: 0 0 12px;
+    min-height: 120px;
+  }
+
+  #todo-list ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border-left: 3px solid #6366F1;
+    transition: box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  .todo-item[data-category="개인"] {
+    border-left-color: #3B82F6;
+  }
+
+  .todo-item[data-category="공부"] {
+    border-left-color: #8B5CF6;
+  }
+
+  .todo-item[data-category="취미"] {
+    border-left-color: #10B981;
+  }
+
+  .todo-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .todo-item.completed {
+    background: #F9FAFB;
+    border-left-color: transparent;
+  }
+
+  .todo-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #6366F1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .todo-item .todo-text {
+    flex: 1;
+    word-break: break-all;
+    font-size: 14px;
+    color: #111827;
+  }
+
+  .todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: #9CA3AF;
+  }
+
+  /* 인라인 수정용 입력창 (수정 모드 진입 시) */
+  .todo-item input[type="text"] {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #111827;
+    padding: 0 0 2px;
+    outline: none;
+    border-bottom: 1px solid transparent;
+  }
+
+  .todo-item input[type="text"]:focus {
+    border-bottom-color: #6366F1;
+  }
+
+  .todo-item .todo-category {
+    font-size: 11px;
+    color: #6366F1;
+    background: #eef2ff;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .todo-item[data-category="개인"] .todo-category {
+    color: #3B82F6;
+    background: #EFF6FF;
+  }
+
+  .todo-item[data-category="공부"] .todo-category {
+    color: #8B5CF6;
+    background: #F5F3FF;
+  }
+
+  .todo-item[data-category="취미"] .todo-category {
+    color: #10B981;
+    background: #ECFDF5;
+  }
+
+  .todo-item button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+    color: #9CA3AF;
+    line-height: 1;
+  }
+
+  .todo-item button:hover {
+    color: #EF4444;
+  }
+
+  .empty-message {
+    text-align: center;
+    color: #9CA3AF;
+    font-size: 14px;
+    padding: 32px 0;
+  }
+
+  #input-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 20px 0 0;
+    margin-top: 8px;
+    border-top: 1px solid #E5E7EB;
+  }
+
+  #todo-input {
+    flex: 1 1 160px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #111827;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  #todo-input:focus {
+    border-color: #6366F1;
+  }
+
+  #category-select {
+    padding: 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+  }
+
+  #add-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #6366F1;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  #add-btn:hover {
+    background: #4F46E5;
+  }
+
+  @media (max-width: 360px) {
+    .app {
+      padding: 16px 10px;
+    }
+
+    #todo-input,
+    #category-select,
+    #add-btn {
+      font-size: 13px;
+    }
+
+    .tab-btn {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>📋 오늘의 할 일</h1>
+    </header>
+
+    <section id="progress-section"></section>
+
+    <nav id="category-tabs">
+      <button class="tab-btn active" data-category="전체">전체</button>
+      <button class="tab-btn" data-category="개인">개인</button>
+      <button class="tab-btn" data-category="공부">공부</button>
+      <button class="tab-btn" data-category="취미">취미</button>
+    </nav>
+
+    <section id="todo-list"></section>
+
+    <section id="input-area">
+      <input type="text" id="todo-input" placeholder="할 일을 입력하세요" />
+      <select id="category-select">
+        <option value="개인">개인</option>
+        <option value="공부">공부</option>
+        <option value="취미">취미</option>
+      </select>
+      <button id="add-btn">추가</button>
+    </section>
+  </div>
+
+<script>
+  // localStorage 저장 키
+  const STORAGE_KEY = "todos";
+
+  // 전역 상태 (최소화하여 상단에 모아서 선언)
+  let todos = [];              // 전체 할 일 목록
+  let currentCategory = "전체"; // 현재 선택된 카테고리 탭
+  let activeEditId = null;      // 인라인 편집 중인 항목의 id (없으면 null)
+  let activeCommitFn = null;    // 편집 중인 항목을 저장 처리하는 함수 (동시 편집 전환 시 호출)
+
+  // localStorage에서 할 일 목록을 불러온다. 값이 없거나 JSON 파싱에 실패하면 빈 배열을 반환한다.
+  function loadTodos() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 현재 todos 배열을 localStorage에 JSON 문자열로 저장한다. 저장 실패 시 콘솔에 에러만 남기고 넘어간다.
+  function saveTodos() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    } catch (e) {
+      console.error("저장 실패", e);
+    }
+  }
+
+  // 새 할 일을 목록 맨 앞에 추가한다. 공백만 입력된 경우 추가하지 않고 입력창 포커스만 되돌린다.
+  function addTodo(text, category) {
+    const trimmed = (text || "").trim();
+    const input = document.getElementById("todo-input");
+
+    if (!trimmed) {
+      if (input) input.focus();
+      return;
+    }
+
+    todos.unshift({
+      id: Date.now().toString(),
+      text: trimmed,
+      category: category || "개인",
+      completed: false,
+      createdAt: new Date().toISOString()
+    });
+
+    saveTodos();
+
+    if (input) input.value = "";
+
+    renderTodos();
+    renderProgress();
+  }
+
+  // 해당 id의 할 일 텍스트를 newText로 교체한다. 빈 문자열이면 기존 텍스트를 그대로 유지한다.
+  function editTodo(id, newText) {
+    const trimmed = (newText || "").trim();
+    if (!trimmed) return;
+
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+
+    todo.text = trimmed;
+    saveTodos();
+    renderTodos();
+  }
+
+  // 해당 id의 할 일을 목록과 저장소에서 삭제한다.
+  function deleteTodo(id) {
+    todos = todos.filter((t) => t.id !== id);
+    saveTodos();
+    renderTodos();
+    renderProgress();
+  }
+
+  // 해당 id의 완료 상태를 반전(true ↔ false)시킨다.
+  function toggleTodo(id) {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+
+    todo.completed = !todo.completed;
+    saveTodos();
+    renderTodos();
+    renderProgress();
+  }
+
+  // 현재 선택된 카테고리(currentCategory)에 맞는 할 일만 반환한다. "전체"면 전체 목록을 그대로 반환한다.
+  function filterTodos() {
+    if (currentCategory === "전체") return todos;
+    return todos.filter((t) => t.category === currentCategory);
+  }
+
+  // 목록의 완료율(%)을 계산한다. 항목이 0개면 나눗셈 없이 0을 반환한다.
+  function calcRate(list) {
+    if (list.length === 0) return 0;
+    const doneCount = list.filter((t) => t.completed).length;
+    return Math.round((doneCount / list.length) * 100);
+  }
+
+  // 전체 진행률과 현재 카테고리 진행률(퍼센트 + 완료 개수)을 계산해 진행률 영역을 다시 그린다.
+  function renderProgress() {
+    const section = document.getElementById("progress-section");
+    if (!section) return;
+
+    const overallRate = calcRate(todos);
+    const overallDone = todos.filter((t) => t.completed).length;
+
+    const categoryList = filterTodos();
+    const categoryRate = calcRate(categoryList);
+    const categoryDone = categoryList.filter((t) => t.completed).length;
+
+    section.innerHTML = `
+      <div class="progress-row">
+        <span>전체 진행률</span>
+        <span>${overallRate}% (${overallDone}/${todos.length})</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-bar-fill" data-category="전체" style="width: ${overallRate}%"></div>
+      </div>
+      <div class="progress-row">
+        <span>${currentCategory} 진행률</span>
+        <span>${categoryRate}% (${categoryDone}/${categoryList.length})</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-bar-fill" data-category="${currentCategory}" style="width: ${categoryRate}%"></div>
+      </div>
+    `;
+  }
+
+  // 현재 카테고리로 필터링한 할 일을 미완료 → 완료 순으로 정렬해 화면에 그린다. 목록이 비면 안내 메시지를 표시한다.
+  function renderTodos() {
+    const list = document.getElementById("todo-list");
+    if (!list) return;
+
+    activeEditId = null;
+    activeCommitFn = null;
+
+    const items = filterTodos();
+
+    if (items.length === 0) {
+      list.innerHTML = `<p class="empty-message">할 일이 없습니다 🎉</p>`;
+      return;
+    }
+
+    const sorted = [...items].sort((a, b) => {
+      if (a.completed === b.completed) return 0;
+      return a.completed ? 1 : -1;
+    });
+
+    const ul = document.createElement("ul");
+
+    sorted.forEach((todo) => {
+      const li = document.createElement("li");
+      li.className = "todo-item" + (todo.completed ? " completed" : "");
+      li.dataset.category = todo.category;
+      li.dataset.id = todo.id;
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = todo.completed;
+      checkbox.addEventListener("change", () => toggleTodo(todo.id));
+
+      const text = document.createElement("span");
+      text.className = "todo-text";
+      text.textContent = todo.text;
+      text.addEventListener("click", () => requestStartEdit(todo.id));
+
+      const category = document.createElement("span");
+      category.className = "todo-category";
+      category.textContent = todo.category;
+
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "✏️";
+      editBtn.addEventListener("click", () => {
+        const newText = prompt("할 일 수정", todo.text);
+        if (newText !== null) editTodo(todo.id, newText);
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "🗑️";
+      deleteBtn.classList.add("todo-delete-btn");
+      deleteBtn.addEventListener("click", () => deleteTodo(todo.id));
+
+      li.appendChild(checkbox);
+      li.appendChild(text);
+      li.appendChild(category);
+      li.appendChild(editBtn);
+      li.appendChild(deleteBtn);
+      ul.appendChild(li);
+    });
+
+    list.innerHTML = "";
+    list.appendChild(ul);
+  }
+
+  // 해당 id 항목의 인라인 편집을 시작한다. 다른 항목이 이미 편집 중이면 먼저 저장(자동 커밋)한 뒤 전환한다.
+  function requestStartEdit(id) {
+    if (activeEditId === id) return;
+
+    if (activeCommitFn) {
+      const prevCommit = activeCommitFn;
+      activeCommitFn = null;
+      activeEditId = null;
+      prevCommit();
+    }
+
+    const li = document.querySelector(`.todo-item[data-id="${id}"]`);
+    if (!li) return;
+
+    const textSpan = li.querySelector(".todo-text");
+    const deleteBtn = li.querySelector(".todo-delete-btn");
+    const todo = todos.find((t) => t.id === id);
+    if (!textSpan || !todo) return;
+
+    beginEdit(todo, li, textSpan, deleteBtn);
+  }
+
+  // 텍스트를 input으로 교체해 편집 모드로 전환한다. Enter/ESC/blur에 따른 저장·취소 처리를 등록한다.
+  function beginEdit(todo, li, textSpan, deleteBtn) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = todo.text;
+
+    let done = false;
+
+    // 편집 종료 처리: shouldSave가 true면 저장(빈 값이면 유지), false면 원본으로 복원한다.
+    function finish(shouldSave) {
+      if (done) return;
+      done = true;
+      activeEditId = null;
+      activeCommitFn = null;
+
+      if (shouldSave) {
+        const newText = input.value.trim();
+        if (newText === "") {
+          if (input.isConnected) li.replaceChild(textSpan, input);
+          if (deleteBtn) deleteBtn.style.display = "";
+          return;
+        }
+        editTodo(todo.id, newText);
+        return;
+      }
+
+      if (input.isConnected) li.replaceChild(textSpan, input);
+      if (deleteBtn) deleteBtn.style.display = "";
+    }
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        finish(true);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        finish(false);
+      }
+    });
+
+    input.addEventListener("blur", () => finish(true));
+
+    if (deleteBtn) deleteBtn.style.display = "none";
+
+    li.replaceChild(input, textSpan);
+
+    activeEditId = todo.id;
+    activeCommitFn = () => finish(true);
+
+    input.focus();
+    input.select();
+  }
+
+  // 입력창(Enter), 추가 버튼(클릭), 카테고리 탭(클릭)에 이벤트 리스너를 등록한다.
+  function bindEvents() {
+    const input = document.getElementById("todo-input");
+    const select = document.getElementById("category-select");
+    const addBtn = document.getElementById("add-btn");
+    const tabs = document.getElementById("category-tabs");
+
+    addBtn.addEventListener("click", () => {
+      addTodo(input.value, select.value);
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        addTodo(input.value, select.value);
+      }
+    });
+
+    tabs.addEventListener("click", (e) => {
+      const btn = e.target.closest(".tab-btn");
+      if (!btn) return;
+
+      currentCategory = btn.dataset.category;
+
+      tabs.querySelectorAll(".tab-btn").forEach((t) => {
+        t.classList.toggle("active", t === btn);
+      });
+
+      renderTodos();
+      renderProgress();
+    });
+  }
+
+  // 앱 초기화: 저장된 할 일을 불러오고 이벤트를 등록한 뒤 첫 화면을 렌더링한다.
+  function init() {
+    todos = loadTodos();
+    bindEvents();
+    renderTodos();
+    renderProgress();
+  }
+
+  init();
+</script>
+</body>
+</html>
