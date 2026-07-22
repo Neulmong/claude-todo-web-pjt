@@ -283,6 +283,25 @@
     color: #fff;
   }
 
+  #todo-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 0 10px;
+  }
+
+  #clear-completed-btn {
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+
+  #clear-completed-btn:hover {
+    color: var(--danger);
+  }
+
   #todo-list {
     padding: 0 0 12px;
     min-height: 120px;
@@ -522,6 +541,10 @@
         <button class="tab-btn" data-category="취미">취미</button>
       </nav>
 
+      <div id="todo-actions">
+        <button id="clear-completed-btn" type="button" style="display: none;">완료 항목 전체 삭제</button>
+      </div>
+
       <section id="todo-list"></section>
 
       <section id="input-area">
@@ -613,7 +636,7 @@
   }
 
   // 회원가입 처리: Supabase Auth signUp을 호출한다. 이메일 확인이 필요 없는 프로젝트 설정이면 바로 로그인되고,
-  // 확인이 필요하면 안내 메시지를 보여주고 로그인 탭으로 돌려보난다.
+  // 확인이 필요하면 안내 메시지를 보여주고 로그인 탭으로 돌려보낸다.
   async function handleSignup(e) {
     e.preventDefault();
 
@@ -773,6 +796,27 @@
     renderProgress();
   }
 
+  // 완료 표시된 할 일을 카테고리와 상관없이 모두 Supabase와 로컬 목록에서 삭제한다.
+  async function clearCompletedTodos() {
+    const hasCompleted = todos.some((t) => t.completed);
+    if (!hasCompleted) return;
+
+    const { error } = await db
+      .from(TABLE_NAME)
+      .delete()
+      .eq("user_id", currentUserId)
+      .eq("completed", true);
+
+    if (error) {
+      console.error("완료 항목 삭제 실패", error);
+      return;
+    }
+
+    todos = todos.filter((t) => !t.completed);
+    renderTodos();
+    renderProgress();
+  }
+
   // 현재 선택된 카테고리(currentCategory)에 맞는 할 일만 반환한다. "전체"면 전체 목록을 그대로 반환한다.
   function filterTodos() {
     if (currentCategory === "전체") return todos;
@@ -823,6 +867,11 @@
 
     activeEditId = null;
     activeCommitFn = null;
+
+    const clearCompletedBtn = document.getElementById("clear-completed-btn");
+    if (clearCompletedBtn) {
+      clearCompletedBtn.style.display = todos.some((t) => t.completed) ? "" : "none";
+    }
 
     const items = filterTodos();
 
@@ -965,12 +1014,14 @@
     const tabs = document.getElementById("category-tabs");
     const themeToggle = document.getElementById("theme-toggle");
     const logoutBtn = document.getElementById("logout-btn");
+    const clearCompletedBtn = document.getElementById("clear-completed-btn");
     const authTabs = document.querySelector(".auth-tabs");
     const loginForm = document.getElementById("login-form");
     const signupForm = document.getElementById("signup-form");
 
     if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
     if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+    if (clearCompletedBtn) clearCompletedBtn.addEventListener("click", clearCompletedTodos);
 
     if (authTabs) {
       authTabs.addEventListener("click", (e) => {
